@@ -2,7 +2,7 @@ name: AWS Lambda Deployment
 
 on:
   push:
-    branches: ["main"]
+    branches: [ "main" ]
 
 env:
   AWS_REGION: ap-northeast-2
