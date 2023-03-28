@@ -56,7 +56,7 @@ def delete_file_in_s3(bucket_name, key):
 
 
 # handler
-def lambda_handler(event, context):
+def handler(event, context):
     # 크롤링 후 json 파일 생성
     file = '/tmp/subway_information.json'
     with open(file, 'w', encoding='utf-8') as f:
