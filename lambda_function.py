@@ -8,7 +8,7 @@ import os
 def find_code():
     INFO = {}
 
-    for naver_code in range(100, 400):
+    for naver_code in range(100, 20000):
         base_query = "https://pts.map.naver.com/end-subway/ends/web/{naver_code}/home".format(naver_code=naver_code)
         page = requests.get(base_query)
         soup = BeautifulSoup(page.text, "html.parser")
