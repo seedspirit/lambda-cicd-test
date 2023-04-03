@@ -8,7 +8,7 @@ import boto3
 
 def scrape_subway_info(naver_code, conn):
     base_query = f"https://pts.map.naver.com/end-subway/ends/web/{naver_code}/home"
-    page = requests.get(base_query)
+    page = requests.get(base_query, verify=False)
     soup = BeautifulSoup(page.text, "html.parser")
 
     try:
