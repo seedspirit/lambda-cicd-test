@@ -3,38 +3,38 @@ from bs4 import BeautifulSoup
 import json
 import time
 from time import sleep
-from multiprocessing import Pool, cpu_count
+from multiprocessing import Process, Pipe
 import boto3
 
-
-def get_station_info(naver_code):
-    base_query = "https://pts.map.naver.com/end-subway/ends/web/{naver_code}/home".format(naver_code=naver_code)
+def scrape_subway_info(naver_code, conn):
+    base_query = f"https://pts.map.naver.com/end-subway/ends/web/{naver_code}/home"
     page = requests.get(base_query)
     soup = BeautifulSoup(page.text, "html.parser")
+
     try:
-        line_num = soup.select_one(
-            'body > div.app > div > div > div > div.place_info_box > div > div.p19g2ytg > div > button > strong.line_no').get_text()
-        station_nm = soup.select_one(
-            'body > div.app > div > div > div > div.place_info_box > div > div.p19g2ytg > div > button > strong.place_name').get_text()
+        line_num = soup.select_one('body > div.app > div > div > div > div.place_info_box > div > div.p19g2ytg > div > button > strong.line_no').get_text()
+        station_nm = soup.select_one('body > div.app > div > div > div > div.place_info_box > div > div.p19g2ytg > div > button > strong.place_name').get_text()
+        conn.send((line_num, station_nm, naver_code))
     except:
-        return None
-
-    return {"station_nm": station_nm, "naver_code": naver_code, "line_num": line_num}
-
+        conn.send(None)
 
 def find_code():
-    with Pool(6) as p:
-        codes = range(100, 20000)
-        results = p.map(get_station_info, codes)
-
     INFO = {}
-    for result in results:
-        if result is None:
-            continue
+    processes = []
+    connections = []
 
-        line_num = result["line_num"]
-        station_nm = result["station_nm"]
-        naver_code = result["naver_code"]
+    for naver_code in range(100, 20000):
+        parent_conn, child_conn = Pipe()
+        p = Process(target=scrape_subway_info, args=(naver_code, child_conn))
+        p.start()
+        processes.append(p)
+        connections.append(parent_conn)
+
+    for i, conn in enumerate(connections):
+        res = conn.recv()
+        if res is None:
+            continue
+        line_num, station_nm, naver_code = res
 
         if line_num not in INFO:
             INFO[line_num] = []
@@ -42,7 +42,11 @@ def find_code():
         block = {"station_nm": station_nm, "naver_code": naver_code}
         INFO[line_num].append(block)
 
+    for p in processes:
+        p.join()
+
     return INFO
+
 
 
 
