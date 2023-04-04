@@ -5,6 +5,9 @@ import time
 from time import sleep
 from multiprocessing import Process, Pipe
 import boto3
+import os
+
+os.system("ulimit -n 2000")
 
 INFO = {}
 
