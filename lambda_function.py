@@ -6,9 +6,11 @@ from time import sleep
 from multiprocessing import Process, Pipe
 import boto3
 
+INFO = {}
+
 def scrape_subway_info(naver_code, conn):
     base_query = f"https://pts.map.naver.com/end-subway/ends/web/{naver_code}/home"
-    page = requests.get(base_query, verify=False)
+    page = requests.get(base_query)
     soup = BeautifulSoup(page.text, "html.parser")
 
     try:
@@ -18,12 +20,12 @@ def scrape_subway_info(naver_code, conn):
     except:
         conn.send(None)
 
-def find_code():
-    INFO = {}
+def find_code(start, end):
+    global INFO
     processes = []
     connections = []
 
-    for naver_code in range(100, 20000):
+    for naver_code in range(start, end):
         parent_conn, child_conn = Pipe()
         p = Process(target=scrape_subway_info, args=(naver_code, child_conn))
         p.start()
@@ -34,6 +36,8 @@ def find_code():
         res = conn.recv()
         if res is None:
             continue
+
+        print(res)
         line_num, station_nm, naver_code = res
 
         if line_num not in INFO:
@@ -45,8 +49,16 @@ def find_code():
     for p in processes:
         p.join()
 
-    return INFO
 
+def run():
+    target = [(100,5000), (5001, 10000), (10001, 15000), (15001, 20000)]
+    
+    for start, end in target:
+        find_code(start, end)
+    
+    global INFO
+
+    return INFO
 
 
 
@@ -80,7 +92,7 @@ def handler(event, context):
     # 크롤링 후 json 파일 생성
     file = '/tmp/subway_information.json'
     with open(file, 'w', encoding='utf-8') as f:
-            json.dump(find_code(), f, ensure_ascii=False, indent=4)
+            json.dump(run(), f, ensure_ascii=False, indent=4)
 
     # 버킷에 저장 준비
     bucket_name = "bucketestmy"
