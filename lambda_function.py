@@ -7,8 +7,6 @@ from multiprocessing import Process, Pipe
 import boto3
 import os
 
-os.system("ulimit -n 2000")
-
 INFO = {}
 
 def scrape_subway_info(naver_code, conn):
@@ -54,7 +52,7 @@ def find_code(start, end):
 
 
 def run():
-    target = [(100,5000), (5001, 10000), (10001, 15000), (15001, 20000)]
+    target = [(100,2000),(2001,4000),(4001,6000),(6001,8000),(8001,10000),(10001,12000),(12001,14000),(14001,16000),(16001,18000),(18001,20000)]
     
     for start, end in target:
         find_code(start, end)
